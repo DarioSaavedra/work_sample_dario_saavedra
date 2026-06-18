@@ -1,0 +1,27 @@
+# Entornos virtuales
+.venv/
+.venv_py314/
+
+# Cache de Python / Jupyter / herramientas
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.matplotlib_cache/
+.cache/
+.DS_Store
+
+# Datos fuente (pesados / propiedad de MELI) — descargar desde el link del README
+df_challenge_meli.csv
+Challenge - Data Analytics Engineer Matching.docx
+
+# Artefactos pesados regenerables por run_analysis.py
+# (se versionan solo los resúmenes chicos: cluster_summary, kmeans_evaluation,
+#  data_quality_audit, registros_descartados, analysis_metadata.json)
+outputs/seller_features.csv
+outputs/seller_clusters.csv
+outputs_backup/
+
+# Herramientas locales de desarrollo
+.claude/
+.vscode/
+CLAUDE.md

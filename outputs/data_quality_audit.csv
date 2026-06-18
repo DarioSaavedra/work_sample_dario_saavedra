@@ -1,0 +1,13 @@
+problema,registros_afectados,porcentaje,tipo,tratamiento_sugerido
+regular_price nulo,135294,73.03,comportamiento_esperado,Interpretar como item sin precio regular/promocion informada.
+seller_reputation nula,2372,1.28,posible_comportamiento_esperado,Mantener como categoria 'sin_reputacion' y medir impacto.
+price nulo,1516,0.82,error,Excluir de features de precio o imputar solo con regla justificada.
+condition not_specified,83,0.04,comportamiento_esperado,Mantener como categoria propia y monitorear proporcion.
+price menor o igual a cero,2,0.0,posible_error,Flaggear y excluir de estadisticas de precio si no hay explicacion.
+Filas duplicadas exactas,0,0.0,posible_error,Eliminar duplicados exactos antes de construir features.
+categoria distinta de category_id,0,0.0,posible_inconsistencia,Validar diccionario de categorias antes de elegir columna canonica.
+regular_price menor que price,0,0.0,posible_error,No calcular descuento para estos casos; revisar origen.
+seller_nickname nulo,0,0.0,error,Descartar o enviar a reproceso; no permite agregacion por seller.
+stock negativo,0,0.0,error,Convertir a nulo o descartar; stock negativo no es valido.
+titulo vacio,0,0.0,error,Enviar a reproceso; afecta analisis textual y validacion de items.
+url nula,0,0.0,error,Revisar extraccion; la URL identifica la publicacion.

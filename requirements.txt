@@ -1,0 +1,6 @@
+pandas==2.2.3
+ipykernel==6.29.5
+notebook
+scikit-learn
+matplotlib
+seaborn
