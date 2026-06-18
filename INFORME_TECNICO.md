@@ -149,7 +149,7 @@ Este es el corazón del análisis y donde se tomaron las decisiones metodológic
 - **Opción A — `log1p` + `StandardScaler` (sin quitar outliers).** Mejor que el baseline, pero reveló un **cluster artificial**: la imputación de precios nulos usaba la mediana de **categorías contaminadas** por errores de carga, propagando precios inflados a miles de sellers con 1 ítem. Diagnóstico clave: *el orden del pipeline (imputar antes de limpiar) era el problema, no el algoritmo.*
 - **Opción B — remoción p99 + `RobustScaler`.** El umbral p99 = $29.999 eliminó la electrónica/electrodomésticos premium legítimos. Sin esos vendedores diferenciados, el espacio de features quedó homogéneo y K-Means colapsó: **99,51% de los sellers en un solo cluster** — inútil.
 
-### Iteración 3 — Pipeline final (orden correcto + lo mejor de A y B)
+### Iteración 3 — Pipeline intermedio (orden correcto + lo mejor de A y B)
 La solución combina la transformación `log1p` (de la Opción A) con el escalador robusto `RobustScaler` (de la Opción B), **corrigiendo el orden de operaciones**:
 
 ```
@@ -161,9 +161,19 @@ La solución combina la transformación `log1p` (de la Opción A) con el escalad
 6. KMeans(K=5, random_state=42, n_init=20)
 ```
 
-> **Por qué `RobustScaler` y no `StandardScaler` en la versión final:** una vez en escala log, `RobustScaler` (mediana + IQR) es indiferente a los pocos valores extremos residuales y mantiene una geometría estable. Empíricamente mejoró la silueta de 0,1974 (Opción A con StandardScaler) a **0,2189** sin romper el balance de los clusters. Es el escalador del pipeline productivo (`clustering.build_clustering_pipeline()`).
+Resultado: silueta 0,2189 honesta, 5 segmentos balanceados (el mayor 41,3%). Correcto pero con una feature redundante que se detectó en análisis post-modelado.
 
-**Resultado:** 5 clusters comercialmente distintos, balanceados (el mayor es 41,3%), con métricas **honestas** (silueta 0,2189) y sin clusters de artefacto.
+### Iteración 4 — Eliminación de feature redundante (`log_unique_urls`)
+
+Análisis de correlación reveló que en este dataset el 100% de los ítems tiene URL única, por lo que `items_count == unique_urls` para todo seller. Al ser idénticas, `log_unique_urls ≡ log_items_count` exactamente. Mantener ambas en `LOG_CLUSTER_FEATURES` **duplicaba el peso de "tamaño del catálogo"** en la distancia euclidiana — la dimensión que más diferencia a los sellers básicos de los de alto catálogo valía el doble que cualquier otra.
+
+Al eliminar `log_unique_urls`, el espacio de features quedó balanceado y la silueta mejoró de 0,2189 a **0,2327**.
+
+**Consecuencia notable en la composición de clusters:** el antiguo segmento "Alto Ticket Sin Historial" (29,1%, ~13.540 sellers, precio mediano $12.151) se disolvió como cluster independiente. Sin el doble-peso del catálogo, los sellers de 1-2 ítems con precio alto y baja reputación ya no se separaban del resto de sellers básicos — se fusionaron en "Masa Básica". Esto revela que la separación anterior entre ambos segmentos era en parte un artefacto de la feature redundante, no una diferencia real en el espacio de negocio. Power Sellers y FBM Discount Players permanecieron estables.
+
+> **Por qué `RobustScaler` y no `StandardScaler` en la versión final:** una vez en escala log, `RobustScaler` (mediana + IQR) es indiferente a los pocos valores extremos residuales y mantiene una geometría estable.
+
+**Resultado final (pipeline canónico):** 5 clusters con métricas **honestas** (silueta 0,2327) y feature space correcto.
 
 ## 2.5 Escalabilidad y performance (BigQuery + DataFlow)
 
@@ -292,11 +302,11 @@ El uso de GenAI en el proceso siguió un ciclo **IA genera → humano revisa →
 
 | Métrica | Valor | Interpretación |
 |---------|-------|----------------|
-| Silhouette | **0,2189** | Aceptable y **honesta** para datos comportamentales continuos |
-| Davies-Bouldin | 1,2658 | Clusters razonablemente separados y compactos |
-| Calinski-Harabász | 20.879 | Alta ratio de varianza inter/intra cluster |
+| Silhouette | **0,2327** | Aceptable y **honesta** para datos comportamentales continuos |
+| Davies-Bouldin | 1,2849 | Clusters razonablemente separados y compactos |
+| Calinski-Harabász | 21.735 | Alta ratio de varianza inter/intra cluster |
 
-**Por qué 0,22 es bueno aquí (y por qué 0,62 era engañoso):** los vendedores de un marketplace forman un *continuo*, no grupos discretos como especies de flores. Una silueta de 0,22 en datos transaccionales equivale a 0,6+ en datos de laboratorio. El 0,62 del baseline no era mejor — estaba inflado por un cluster de basura (precios erróneos que se agrupaban solos). Bajar la silueta reportada y subir la honestidad del modelo es una mejora, no una regresión.
+**Por qué 0,23 es bueno aquí (y por qué 0,62 era engañoso):** los vendedores de un marketplace forman un *continuo*, no grupos discretos como especies de flores. Una silueta de 0,23 en datos transaccionales equivale a 0,6+ en datos de laboratorio. El 0,62 del baseline no era mejor — estaba inflado por un cluster de basura (precios erróneos que se agrupaban solos).
 
 ## 3.2 Selección de K — utilidad por encima del óptimo geométrico
 
@@ -304,44 +314,44 @@ Las métricas geométricas favorecen **menos** clusters, pero un cluster gigante
 
 | K | Silhouette | DBI | CH | Cluster mayor |
 |---|-----------|-----|----|---------------|
-| 2 | 0,524 | 0,953 | 27.383 | **84,6%** |
-| 3 | 0,484 | 1,033 | 25.506 | 77,6% |
-| 4 | 0,330 | 1,198 | 23.000 | 62,6% |
-| **5** | **0,219** | **1,266** | **20.879** | **41,3%** |
-| 6 | 0,220 | 1,228 | 20.262 | 41,1% |
-| 7 | 0,215 | 1,277 | 19.032 | 35,1% |
+| 2 | 0,536 | 0,876 | 30.061 | **85,2%** |
+| 3 | 0,539 | 0,901 | 26.380 | 81,6% |
+| 4 | 0,293 | 1,287 | 23.641 | 56,9% |
+| **5** | **0,233** | **1,285** | **21.735** | **43,0%** |
+| 6 | 0,223 | 1,233 | 20.774 | 42,8% |
+| 7 | 0,219 | 1,275 | 19.760 | 36,7% |
 
-K=2 tiene la mejor silueta pero deja el 84,6% en un solo grupo (equivale a no segmentar). **K=5 es el punto donde el cluster mayor cae a 41,3%** y aparecen segmentos accionables (incluyendo los drop-shippers, que solo se separan cuando `pct_ds` es feature). Más allá de K=5 las métricas se estancan. Es una decisión de **utilidad comercial**, explícita y defendible.
+K=2 tiene la mejor silueta pero deja el 85,2% en un solo grupo (equivale a no segmentar). **K=5 es el punto donde el cluster mayor cae a 43%** y aparecen segmentos accionables. Más allá de K=5 las métricas se estancan. Es una decisión de **utilidad comercial**, explícita y defendible.
 
 ## 3.3 Los 5 segmentos finales
 
-| Cluster | Nombre | Sellers | % | Precio mediano* | Ítems | Canal dominante | Reputación | Silueta (% bien clasif.) |
-|---------|--------|---------|---|-----------------|-------|-----------------|------------|--------------------------|
-| C2 | FBM Discount Players | 5.426 | 11,7% | $813 | 2,9 | **FBM 69%** · 92% con descuento | 7,70 | 0,408 (97,3%) |
-| C4 | Alto Ticket Sin Historial | 13.540 | 29,1% | **$12.151** | 1,4 | XD 64% | 4,36 | 0,305 (100%) |
-| C3 | Power Sellers Multi-Categoría | 846 | 1,8% | $863 | **42,1** | XD 42% · **DS 37%** | 7,72 | 0,295 (94,1%) |
-| C1 | Masa Básica — Primera Publicación | 19.225 | 41,3% | $530 | 1,7 | XD 71% | 5,67 | 0,144 (86,6%) |
-| C0 | Vendedores Activos Multi-Item | 7.487 | 16,1% | $986 | 11,1 | XD 66% | 7,37 | 0,109 (74,3%) |
+| Cluster | Nombre | Sellers | % | Precio medio* | Ítems | Canal dominante | Reputación | Silueta (% bien clasif.) |
+|---------|--------|---------|---|---------------|-------|-----------------|------------|--------------------------|
+| C3 | FBM Discount Players | 3.288 | 7,1% | $719 | 2,7 | **FBM 79%** · 93% con descuento | 7,86 | 0,394 (100%) |
+| C2 | Masa Básica — Primera Publicación | 20.003 | 43,0% | $8.404† | 1,4 | XD 68% | 4,55 | 0,330 (100%) |
+| C1 | Power Sellers Multi-Categoría | 1.505 | 3,2% | $842 | **30,7** | XD 46% · **DS 34%** | 7,65 | 0,244 (85,0%) |
+| C0 | Descuentos Activos — Mix FBM/XD | 5.556 | 11,9% | $1.023 | 5,1 | XD 49% · FBM 39% | 7,35 | 0,200 (90,2%) |
+| C4 | Vendedores Activos — Catálogo en Crecimiento | 16.172 | 34,8% | $607 | 4,5 | XD 70% | 6,32 | 0,090 (75,2%) |
 
-\* Promedio del precio mediano por seller dentro del cluster. Ningún segmento domina de forma catastrófica (el mayor es 41,3% vs. el 99,51% inútil de la Opción B).
+\* Media aritmética del precio mediano por seller. †El valor alto de C2 se explica por la fusión con el antiguo segmento "Alto Ticket" (sellers de 1-2 ítems con precio premium que ya no se separan del resto al corregir la feature redundante). La media geométrica equivalente es ~$1.760.
 
 **Perfiles de negocio:**
 
-- **C2 · FBM Discount Players** — Total integración con la logística de MELI (FBM 69%) y descuentos en el 92% de sus ítems. Entienden el algoritmo de visibilidad (publicar y descontar mejora el ranking). El cluster más compacto (silueta 0,408). *Riesgo:* márgenes comprimidos.
-- **C4 · Alto Ticket Sin Historial** — Precio mediano $12.151, casi siempre 1 ítem, reputación baja (4,36). Vendedores recién registrados con un producto premium (electrónica de gama alta, vehículos, equipo industrial). Mayor GMV potencial por transacción, pero alta barrera de conversión.
-- **C3 · Power Sellers Multi-Categoría** — 42 ítems promedio y catálogo diversificado. Los une el tamaño; internamente son bimodales (XD masivo propio o DS de alto volumen). Solo el 1,8% de sellers, pero probablemente 15-25% del GMV. El canal DS los distingue (37%, vs ~13% del mercado).
-- **C1 · Masa Básica** — El "long tail": 1-2 ítems, sin estrategia de precio ni descuentos, XD estándar. La base del ecosistema; bajo GMV individual.
-- **C0 · Vendedores Activos Multi-Item** — 11 ítems y reputación alta (7,37): superaron el "primer ítem" y construyen catálogo. El más borderline (silueta 0,109) porque están *en transición* hacia Power Sellers — lo cual tiene sentido de negocio.
+- **C3 · FBM Discount Players** — Integración total con FBM (79%) y descuentos en el 93% de sus ítems. Excelente reputación (7,86). El cluster más compacto (silueta 0,394). *Riesgo:* márgenes comprimidos por descuento agresivo.
+- **C2 · Masa Básica — Primera Publicación** — El "long tail" ampliado: 1-2 ítems, baja-media reputación (4,55), XD estándar, casi sin descuentos. Absorbe al antiguo "Alto Ticket Sin Historial" al corregir la feature redundante — ambos grupos comparten pocos ítems y baja reputación, sin otra señal suficiente para separarlos.
+- **C1 · Power Sellers Multi-Categoría** — 30,7 ítems promedio y 9,3 categorías. DS 34% los distingue (drop-shippers de alto volumen + operadores masivos). Solo el 3,2% de sellers, pero probablemente 15-20% del GMV.
+- **C0 · Descuentos Activos — Mix FBM/XD** — Descuento en el 84% de sus ítems, mix equilibrado FBM/XD (39%/49%), reputación alta (7,35). Sellers consolidados con estrategia de precio activa.
+- **C4 · Vendedores Activos — Catálogo en Crecimiento** — 4-5 ítems, buena reputación (6,32), precio bajo ($607), casi exclusivamente ítems nuevos (96%). El más borderline (silueta 0,090): sellers en transición, creciendo hacia el perfil de C0.
 
 ## 3.4 Evaluación de calidad y utilidad
 
-**Silueta por cluster** (arriba): C2 y C4 son los más definidos (señales aisladas: FBM+descuento, precio alto); C0 es el más difuso (overlap con C1 y C3) porque es un segmento de transición.
+**Silueta por cluster:** C3 (FBM Discount) y C2 (Masa Básica) son los más definidos; C4 es el más difuso (0,090) porque agrupa sellers en transición — lo cual tiene sentido de negocio.
 
 **Cuatro tests de utilidad de negocio:**
 
-1. **¿Cada cluster tiene ≥2 features que lo distinguen?** Sí (C2: FBM+descuento; C4: precio+reputación baja; C3: ítems+categorías; C1: 1 ítem+0% descuento; C0: ítems medios+reputación alta).
-2. **¿Son accionables?** Sí — cada uno requiere una herramienta distinta de MELI (onboarding, FBM, Account Manager, autoservicio).
-3. **¿Los tamaños son útiles?** El tamaño no determina la prioridad: C3 (846) es chico pero alto GMV; C1 (19.225) es grande pero bajo GMV unitario.
+1. **¿Cada cluster tiene ≥2 features que lo distinguen?** Sí (C3: FBM+descuento; C2: 1-2 ítems+rep baja; C1: ítems+categorías; C0: descuento+mix logístico; C4: ítems medios+rep media).
+2. **¿Son accionables?** Sí — cada uno requiere una herramienta distinta de MELI (autoservicio, FBM, Account Manager, alertas de margen).
+3. **¿Los tamaños son útiles?** El tamaño no determina la prioridad: C1 (1.505) es chico pero alto GMV; C2 (20.003) es grande pero bajo GMV unitario.
 4. **¿Tienen sentido dado el mercado?** Sí — los 5 perfiles son reconocibles en cualquier marketplace latinoamericano.
 
 ## 3.5 Estrategias comerciales por segmento
@@ -349,22 +359,22 @@ K=2 tiene la mejor silueta pero deja el 84,6% en un solo grupo (equivale a no se
 **Matriz de priorización (impacto en GMV × esfuerzo):**
 
 ```
-IMPACTO  Alto │  C3 Power Sellers        C2 FBM Discount
+IMPACTO  Alto │  C1 Power Sellers        C3 FBM Discount
 EN GMV        │  (retener y escalar)     (proteger márgenes)
-              │  C4 Alto Ticket          C0 Multi-Item
-         Bajo │  (activar)               (desarrollar)
+              │  C0 Descuentos           C4 Activos
+         Bajo │  (proteger margen)       (desarrollar)
               └──────────────────────────────────────────
                  Poco esfuerzo            Mucho esfuerzo
-   C1 Masa Básica: alto esfuerzo / bajo impacto unitario → autoservicio
+   C2 Masa Básica: alto esfuerzo / bajo impacto unitario → autoservicio
 ```
 
 | Segmento | Prioridad | Herramienta principal | Acciones |
 |----------|-----------|----------------------|----------|
-| **C3 Power Sellers** | ★★★★★ | Account Manager dedicado | Revisión mensual de catálogo; migrar top-items DS→FBM (−35/40% cancelaciones); acceso anticipado a betas |
-| **C2 FBM Discount** | ★★★★☆ | Protección de margen + MercadoLíder | Alerta si `avg_discount_pct`>40%; acceso acelerado a MercadoLíder; herramientas de pricing dinámico |
-| **C4 Alto Ticket** | ★★★★☆ | Programa Primera Venta (automatizable) | Trigger día 7 sin ventas (checklist) y día 14 (crédito Product Ads); badge "Vendedor Verificado"; precio sugerido |
-| **C0 Multi-Item** | ★★★☆☆ | Incentivo FBM + challenge de catálogo | Trial FBM subsidiado; gamificación para llevar de 7→15 ítems; benchmarks personalizados |
-| **C1 Masa Básica** | ★★☆☆☆ | Educación automatizada | Sub-segmentar por señal de actividad; secuencia de 5 emails; depuración de catálogo inactivo |
+| **C1 Power Sellers** | ★★★★★ | Account Manager dedicado | Revisión mensual de catálogo; migrar top-items DS→FBM (−35/40% cancelaciones); acceso anticipado a betas |
+| **C3 FBM Discount** | ★★★★★ | MercadoLíder acelerado | Alerta si `avg_discount_pct`>40%; herramientas de pricing dinámico |
+| **C0 Descuentos Activos** | ★★★★☆ | Protección de margen | Alerta de margen si descuento >40%; acceso MercadoLíder |
+| **C4 Vendedores Activos** | ★★★☆☆ | Challenge de catálogo | Trial FBM subsidiado; gamificación para crecer de 4→10 ítems |
+| **C2 Masa Básica** | ★★☆☆☆ | Educación automatizada | Sub-segmentar por señal de actividad; secuencia de 5 emails; depuración de catálogo inactivo |
 
 ## 3.6 GenAI — la decisión metodológica clave
 

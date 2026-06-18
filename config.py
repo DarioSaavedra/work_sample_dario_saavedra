@@ -67,7 +67,12 @@ DEFAULT_CLUSTER_FEATURES = [
 
 LOG_CLUSTER_FEATURES = [
     "log_items_count",
-    "log_unique_urls",
+    # log_unique_urls eliminada: en este dataset cada ítem tiene URL única,
+    # por lo que items_count == unique_urls para todo seller. La transformación
+    # log1p es monótona, así que log_unique_urls ≡ log_items_count exactamente.
+    # Mantenerla duplicaba el peso de la dimensión "tamaño del catálogo" en la
+    # distancia euclidiana de K-Means. Se conserva unique_urls en seller_features
+    # para análisis descriptivo, pero se excluye del espacio de clustering.
     "log_total_stock",
     "log_avg_stock",
     "log_median_stock",

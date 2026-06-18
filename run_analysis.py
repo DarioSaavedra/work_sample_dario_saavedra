@@ -40,11 +40,11 @@ warnings.filterwarnings("ignore")
 
 
 CLUSTER_NAMES_DEFAULT = {
-    0: "Vendedores Activos Multi-Item",
-    1: "Masa Básica — Primera Publicación",
-    2: "FBM Discount Players",
-    3: "Power Sellers Multi-Categoría",
-    4: "Alto Ticket Sin Historial",
+    0: "Descuentos Activos — Mix FBM/XD",
+    1: "Power Sellers Multi-Categoría",
+    2: "Masa Básica — Primera Publicación",
+    3: "FBM Discount Players",
+    4: "Vendedores Activos — Catálogo en Crecimiento",
 }
 
 

@@ -45,21 +45,21 @@ GRAY1    = "#BBBBBB"
 GRAY2    = "#888888"
 
 CLUSTER_NAMES = {
-    0: "Vendedores Activos Multi-Item",
-    1: "Masa Básica — Primera Publicación",
-    2: "FBM Discount Players",
-    3: "Power Sellers Multi-Categoría",
-    4: "Alto Ticket Sin Historial",
+    0: "Descuentos Activos — Mix FBM/XD",
+    1: "Power Sellers Multi-Categoría",
+    2: "Masa Básica — Primera Publicación",
+    3: "FBM Discount Players",
+    4: "Vendedores Activos — Catálogo en Crecimiento",
 }
 CLUSTER_COLORS = ["#4C78A8", "#59A14F", "#E15759", "#F28E2B", "#76B7B2"]
-CLUSTER_PRIORITY = {0: "★★★☆☆", 1: "★★☆☆☆", 2: "★★★★★", 3: "★★★★★", 4: "★★★★☆"}
-CLUSTER_CHURN    = {0: "BAJO-MEDIO", 1: "ALTO", 2: "MEDIO", 3: "BAJO", 4: "ALTO"}
+CLUSTER_PRIORITY = {0: "★★★★☆", 1: "★★★★★", 2: "★★☆☆☆", 3: "★★★★★", 4: "★★★☆☆"}
+CLUSTER_CHURN    = {0: "MEDIO", 1: "BAJO", 2: "ALTO", 3: "MEDIO", 4: "BAJO-MEDIO"}
 CLUSTER_ACTION   = {
-    0: "Incentivo FBM + challenge de catálogo",
-    1: "Secuencia educativa automatizada (5 emails/30 días)",
-    2: "MercadoLíder + alerta de margen si descuento > 40%",
-    3: "Account Manager dedicado + migración DS→FBM en top-items",
-    4: "Product Ads gratis al día 7 sin ventas (programa primera venta)",
+    0: "Alerta de margen si descuento > 40% + acceso MercadoLíder",
+    1: "Account Manager dedicado + migración DS→FBM en top-items",
+    2: "Secuencia educativa automatizada (5 emails/30 días)",
+    3: "MercadoLíder acelerado + herramienta de pricing dinámico",
+    4: "Challenge de catálogo + incentivo FBM subsidiado",
 }
 
 
@@ -535,7 +535,7 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
       </div>
       <div class="faq-card">
         <h3>Resultado</h3>
-        <p>5 clusters comercialmente accionables con silhouette=0.22, arquitectura
+        <p>5 clusters comercialmente accionables con silhouette=0.23, arquitectura
            BigQuery escalable a 5,000M de filas, e integración GenAI para interpretar
            centroides en lenguaje de negocio.</p>
       </div>
@@ -639,7 +639,7 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
             <h4>Distribución long-tail: el 76.8% de sellers tiene ≤ 3 ítems</h4>
             <p>Esta concentración es una propiedad del mercado, no un bug del modelo.
                K-Means no puede crear separación donde el dato no la tiene — esto se
-               refleja en la silueta honesta de <code>0.22</code>.</p>
+               refleja en la silueta honesta de <code>0.23</code>.</p>
           </div>
         </div>
       </div>
@@ -815,14 +815,29 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
         </div>
         <div class="ds-step"><div class="ds-num">V3</div>
           <div class="ds-step-body">
-            <h4>Pipeline final — umbral de dominio + orden correcto + RobustScaler</h4>
+            <h4>Pipeline intermedio — umbral de dominio + orden correcto + RobustScaler</h4>
             <p>Combinación de lo aprendido en V1 y V2:
                <strong>(1)</strong> eliminar precios &gt; $1M MXN (umbral de dominio, no estadístico),
                <strong>(2)</strong> imputar precios nulos por categoría (ahora sin contaminación),
                <strong>(3)</strong> log1p sobre precio y volumen,
                <strong>(4)</strong> RobustScaler (mediana+IQR).
                Bonus: <code>pct_ds</code> agregado — permitió separar Drop Shippers como segmento propio.</p>
-            <span class="dc-pill green">Pipeline final — silhouette = 0.22 honesto</span>
+            <span class="dc-pill">Silhouette = 0.22 — correcto pero con feature redundante detectada</span>
+          </div>
+        </div>
+        <div class="ds-step"><div class="ds-num">V4</div>
+          <div class="ds-step-body">
+            <h4>Eliminación de feature redundante — <code>log_unique_urls</code></h4>
+            <p>Análisis post-modelado detectó que en este dataset cada ítem tiene URL única,
+               por lo que <code>items_count == unique_urls</code> para todo seller. Al ser idénticas,
+               <code>log_unique_urls ≡ log_items_count</code>: mantenerlas duplicaba el peso de
+               "tamaño del catálogo" en la distancia euclidiana de K-Means. Al eliminar
+               <code>log_unique_urls</code>, el espacio de features quedó balanceado.
+               <strong>Consecuencia notable:</strong> el segmento "Alto Ticket Sin Historial" se disolvió —
+               sin el doble-peso del catálogo, los sellers de 1-2 ítems con precio alto
+               y baja reputación se fusionaron en "Masa Básica". Power Sellers y FBM Discount Players
+               permanecieron estables. Silhouette mejoró de 0.22 a 0.23.</p>
+            <span class="dc-pill green">Pipeline final — silhouette = 0.23 · feature space corregido</span>
           </div>
         </div>
       </div>
@@ -847,17 +862,17 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
 
     <div class="metrics-row">
       <div class="metric-card">
-        <div class="m-val">0.22</div>
+        <div class="m-val">0.23</div>
         <div class="m-label">Silhouette</div>
         <div class="m-note">Honesto para datos transaccionales continuos</div>
       </div>
       <div class="metric-card">
-        <div class="m-val">1.27</div>
+        <div class="m-val">1.28</div>
         <div class="m-label">Davies-Bouldin</div>
         <div class="m-note">Clusters razonablemente separados</div>
       </div>
       <div class="metric-card">
-        <div class="m-val">20,879</div>
+        <div class="m-val">21,735</div>
         <div class="m-label">Calinski-Harabász</div>
         <div class="m-note">Alta ratio varianza inter/intra</div>
       </div>

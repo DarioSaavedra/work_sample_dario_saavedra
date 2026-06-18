@@ -4,15 +4,15 @@
   "n_items_orig": 185250,
   "n_sellers": 46524,
   "n_clusters": 5,
-  "silhouette": 0.2189,
-  "dbi": 1.2658,
-  "ch": 20879.0,
+  "silhouette": 0.2327,
+  "dbi": 1.2849,
+  "ch": 21734.8,
   "cluster_names": {
-    "0": "Vendedores Activos Multi-Item",
-    "1": "Masa Básica — Primera Publicación",
-    "2": "FBM Discount Players",
-    "3": "Power Sellers Multi-Categoría",
-    "4": "Alto Ticket Sin Historial"
+    "0": "Descuentos Activos — Mix FBM/XD",
+    "1": "Power Sellers Multi-Categoría",
+    "2": "Masa Básica — Primera Publicación",
+    "3": "FBM Discount Players",
+    "4": "Vendedores Activos — Catálogo en Crecimiento"
   },
   "output_dir": "outputs"
 }
