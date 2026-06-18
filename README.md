@@ -7,16 +7,16 @@ Segmentación no supervisada de vendedores del marketplace mexicano (MLM) a part
 ## Resultados principales
 
 - **Modelo:** K-Means con K=5 sobre features log-transformadas + `RobustScaler`.
-- **Métricas:** Silhouette = **0,2189** · Davies-Bouldin = 1,2658 · Calinski-Harabász = 20.879 (honestas para datos comportamentales continuos).
+- **Métricas:** Silhouette = **0,2327** · Davies-Bouldin = 1,2849 · Calinski-Harabász = 21.735 (honestas para datos comportamentales continuos).
 - **5 segmentos accionables:**
 
 | Cluster | Segmento | Sellers | % |
 |---------|----------|---------|---|
-| C1 | Masa Básica — Primera Publicación | 19.225 | 41,3% |
-| C4 | Alto Ticket Sin Historial | 13.540 | 29,1% |
-| C0 | Vendedores Activos Multi-Item | 7.487 | 16,1% |
-| C2 | FBM Discount Players | 5.426 | 11,7% |
-| C3 | Power Sellers Multi-Categoría | 846 | 1,8% |
+| C2 | Masa Básica — Primera Publicación | 20.003 | 43,0% |
+| C4 | Vendedores Activos — Catálogo en Crecimiento | 16.172 | 34,8% |
+| C0 | Descuentos Activos — Mix FBM/XD | 5.556 | 11,9% |
+| C3 | FBM Discount Players | 3.288 | 7,1% |
+| C1 | Power Sellers Multi-Categoría | 1.505 | 3,2% |
 
 El detalle metodológico, las tres iteraciones del clustering, las estrategias comerciales y la arquitectura cloud están en **[`INFORME_TECNICO.md`](INFORME_TECNICO.md)**. El reporte visual autocontenido está en **`report_mlm.html`** (abrir en el navegador).
 
