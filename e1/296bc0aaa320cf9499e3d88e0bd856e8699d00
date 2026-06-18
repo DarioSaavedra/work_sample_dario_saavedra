@@ -1,0 +1,19 @@
+README.md
+  s_9497768c9f0cfe::t_b5957a3302e25b 10,15-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e1296bc0aaa320cf9499e3d88e0bd856e8699d00",
+  "prompts": {},
+  "sessions": {
+    "s_9497768c9f0cfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5a36c90-d89b-4eb4-98ef-9555c2665904",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Dario Emanuel Saavedra Griott <darioemanuel.saavedragriott@mercadolibre.com>"
+    }
+  }
+}
