@@ -228,6 +228,39 @@ GROUP BY tim_day, seller_nickname;
 
 El job se configura con **scheduler diario** en DataFlow (ej. `{"type": "daily", "daily": [{"hour": 6, "minute": 0}]}`), pasa por el lifecycle de aprobación **desa → prod**, y no requiere reprocesar histórico en cada corrida.
 
+### DDL de la tabla raw en BigQuery
+
+```sql
+CREATE TABLE `meli-project.commerce.items_snapshot_raw` (
+  tim_day         DATE,
+  seller_nickname STRING,
+  titulo          STRING,
+  seller_reputation STRING,
+  stock           INT64,
+  logistic_type   STRING,
+  condition       STRING,
+  is_refurbished  BOOL,
+  price           NUMERIC,
+  regular_price   NUMERIC,
+  categoria       STRING,
+  url             STRING,
+  category_id     STRING,
+  category_name   STRING
+)
+PARTITION BY DATE_TRUNC(tim_day, MONTH)
+CLUSTER BY tim_day, seller_nickname, category_id;
+```
+
+### Recomendaciones de performance
+
+| Tema | Recomendación | Motivo |
+|------|---------------|--------|
+| Particionamiento | Particionar por `tim_day` (mensual) | Los snapshots son diarios y casi todas las consultas filtran por fecha |
+| Clustering físico | `CLUSTER BY tim_day, seller_nickname, category_id` | Reduce bytes leídos en filtros por seller, fecha y categoría |
+| Capas analíticas | Crear `seller_daily_features` como tabla agregada | Evita full scans sobre la tabla raw de miles de millones de filas |
+| Data Science | Entrenar modelos desde feature tables versionadas por `snapshot_date` | Hace reproducibles los entrenamientos y baja costos de lectura |
+| Joins | Filtrar por partición antes de joinear y preagregar la tabla más grande | Disminuye shuffle, memoria y bytes procesados |
+
 ## 2.6 Registro IA → revisión humana
 
 El uso de GenAI en el proceso siguió un ciclo **IA genera → humano revisa → IA corrige → se documenta**. Ejemplos concretos:
