@@ -1,0 +1,40 @@
+report_mlm.html
+  s_9497768c9f0cfe::t_66d1e9326a179b 223,327,503,510-525,550,555,560,566,570-576,578-579,583-589,591-592,596-602,604-605,609-615,618,622-628,630-631,635,640,651
+run_analysis.py
+  s_9497768c9f0cfe::t_da44ec79078d5f 43-47
+INFORME_TECNICO.md
+  s_9497768c9f0cfe::t_43434d21bd2a16 305-307,309,317-322,324,328-334,336,340-344,348,352-354
+  s_9497768c9f0cfe::t_b420c1523ec6eb 152,164,166-176
+  s_9497768c9f0cfe::t_b4f5627ccc72e5 362,364-365,368,373-377
+config.py
+  s_9497768c9f0cfe::t_7974150f9a9386 70-75
+outputs/kmeans_evaluation.csv
+  s_9497768c9f0cfe::t_3f26283ba7ee8d 2-8
+outputs/cluster_summary.csv
+  s_9497768c9f0cfe::t_3f26283ba7ee8d 1-6
+02_full_challenge_flow.ipynb
+  s_9497768c9f0cfe::t_ff7d6e336e236c 958,968-969,1417
+generate_report.py
+  s_9497768c9f0cfe::t_70c4265605deea 538,642,865,870,875
+  s_9497768c9f0cfe::t_08a2a5d5615980 818,825-840
+  s_9497768c9f0cfe::t_6ef951eb24b01c 48-52,55-56,58-62
+outputs/analysis_metadata.json
+  s_9497768c9f0cfe::t_3f26283ba7ee8d 7-9
+  s_9497768c9f0cfe::t_e1bb9d47a658a4 11-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "763409b18b837af25014196b0f05975ea0bed984",
+  "prompts": {},
+  "sessions": {
+    "s_9497768c9f0cfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5a36c90-d89b-4eb4-98ef-9555c2665904",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Dario Emanuel Saavedra Griott <darioemanuel.saavedragriott@mercadolibre.com>"
+    }
+  }
+}
