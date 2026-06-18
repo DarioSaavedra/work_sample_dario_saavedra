@@ -1,0 +1,23 @@
+README.md
+  s_9497768c9f0cfe::t_d7082b76beecfe 21
+02_full_challenge_flow.ipynb
+  s_9497768c9f0cfe::t_1fee47e6e3c55f 7,1280,1299,1305,1537,1561
+INFORME_TECNICO.md
+  s_9497768c9f0cfe::t_afb1afcb3e913a 207-214,228-233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "14741503027af91c74a5c924752bee916bc44923",
+  "prompts": {},
+  "sessions": {
+    "s_9497768c9f0cfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5a36c90-d89b-4eb4-98ef-9555c2665904",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Dario Emanuel Saavedra Griott <darioemanuel.saavedragriott@mercadolibre.com>"
+    }
+  }
+}
