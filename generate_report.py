@@ -1092,6 +1092,18 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
              adicional de las herramientas internas.</p>
         </div>
       </div>
+      <div class="step-card">
+        <div class="step-num">6</div>
+        <div class="step-card-body">
+          <h4>Iterar los skills de automatización para nuevos casos de análisis</h4>
+          <p>El repo incluye dos Claude Code skills reutilizables:
+             <code>/generar-analisis</code> y <code>/generate-html-report</code>.
+             A medida que se incorporen nuevos sites (MLB, MLA), nuevas features o
+             distintos parámetros de clustering, los skills pueden extenderse para
+             incorporar esos cambios sin reescribir el pipeline manualmente —
+             reduciendo el tiempo de análisis de días a minutos en casos similares.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
