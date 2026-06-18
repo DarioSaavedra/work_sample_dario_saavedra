@@ -190,7 +190,6 @@ section h2 span{color:var(--accent);}
     <a href="#resultados">✅ Resultados</a>
     <a href="#estrategias">💼 Estrategias</a>
     <a href="#bigquery">☁️ BigQuery</a>
-    <a href="#genai">🤖 GenAI</a>
     <a href="#proximos">🚀 Próximos Pasos</a>
   </div>
   <div class="nav-right">
@@ -210,7 +209,7 @@ section h2 span{color:var(--accent);}
       Challenge Data Analytics Engineer — <strong>Mercado Libre México (MLM)</strong>.
       Segmentación no supervisada de <strong>46,524 vendedores</strong> a partir de
       185,250 publicaciones activas del 2024-08-01 usando K-Means, RobustScaler y
-      una arquitectura productiva en BigQuery + dbt.
+      una arquitectura productiva en BigQuery + DataFlow.
     </p>
     <div class="hero-faq">
       <div class="faq-card">
@@ -268,7 +267,7 @@ section h2 span{color:var(--accent);}
         <div class="step-card-body">
           <h4>¿Cómo escalamos el análisis local a producción en MELI?</h4>
           <p>La solución local funciona con pandas y una laptop. Productivizarla requiere
-             BigQuery + dbt + Airflow para procesar 5,000M de filas diarias sin reproducir el costo.</p>
+             BigQuery + DataFlow para procesar 5,000M de filas diarias sin reproducir el costo.</p>
         </div>
       </div>
     </div>
@@ -480,41 +479,34 @@ section h2 span{color:var(--accent);}
       <div class="datasec-steps">
         <div class="ds-step"><div class="ds-num">V1</div>
           <div class="ds-step-body">
-            <h4>Baseline — StandardScaler sobre avg_price bruto</h4>
-            <p>Resultado: silhouette = 0.62 (inflado artificialmente).
-               El cluster 3 tenía avg_price = $546,640 MXN —
-               era un artefacto de la imputación contaminada, no un segmento real.
-               Los 0.62 eran la separación entre datos reales y datos erróneos.</p>
-            <span class="dc-pill red">Descartado — métricas engañosas</span>
+            <h4>Baseline — precio bruto sin tratamiento de outliers</h4>
+            <p>StandardScaler sobre <code>avg_price</code> con el outlier de $4,770M MXN presente.
+               La media subió a ~$954M y el desvío a ~$2.100M — todos los vendedores normales
+               quedaron comprimidos en ±0.0005. Silhouette = 0.62, inflado por la separación
+               entre el cluster de artefacto y el resto. <strong>Las métricas parecían excelentes
+               pero el modelo no servía.</strong></p>
+            <span class="dc-pill red">Descartado — métricas engañosas por artefacto</span>
           </div>
         </div>
         <div class="ds-step"><div class="ds-num">V2</div>
           <div class="ds-step-body">
-            <h4>Opción A (sugerencia inicial del modelo de IA) — log + StandardScaler</h4>
-            <p>Corrección: log1p sobre precios. Resultado: clusters más interpretables.
-               Pero el cluster 3 seguía siendo un artefacto — la imputación se hacía
-               ANTES de eliminar outliers, propagando $500M a ítems nulos de la misma categoría.</p>
-            <span class="dc-pill">Parcialmente correcto — problema de orden</span>
-          </div>
-        </div>
-        <div class="ds-step"><div class="ds-num">V2b</div>
-          <div class="ds-step-body">
-            <h4>Opción B (propuesta alternativa) — RobustScaler + remoción p99</h4>
-            <p>Se propuso usar p99 ($29,999 MXN) como umbral y RobustScaler.
-               Resultado: 99.51% de sellers en un solo cluster.
-               <strong>Diagnóstico:</strong> p99 eliminó electrónica premium,
-               dejando un dataset tan homogéneo que K-Means no encontraba separación.</p>
-            <span class="dc-pill red">Descartado — blob del 99.51%</span>
+            <h4>Remoción p99 + RobustScaler (propuesta alternativa)</h4>
+            <p>Se propuso eliminar precios sobre el percentil 99 (<strong>$29,999 MXN</strong>) y escalar
+               con RobustScaler. El p99 era demasiado bajo para México: eliminó MacBooks, refrigeradores
+               premium y equipo profesional. Sin esa variabilidad de precio, el dataset quedó homogéneo
+               y K-Means no encontró separación. Resultado: <strong>99.51% de sellers en un solo cluster.</strong></p>
+            <span class="dc-pill red">Descartado — blob del 99.51%, inutilizable</span>
           </div>
         </div>
         <div class="ds-step"><div class="ds-num">V3</div>
           <div class="ds-step-body">
-            <h4>Pipeline Final — Orden correcto + RobustScaler + pct_ds</h4>
-            <p>Fix: <strong>(1)</strong> eliminar precios > $1M con umbral de dominio,
-               <strong>(2)</strong> imputar (ahora sin contaminación),
-               <strong>(3)</strong> log1p,
-               <strong>(4)</strong> RobustScaler (mediana+IQR, más robusto que StandardScaler sin winsorizaciones).
-               Bonus: agregado <code>pct_ds</code> que permitió separar Drop Shippers como segmento propio.</p>
+            <h4>Pipeline final — umbral de dominio + orden correcto + RobustScaler</h4>
+            <p>Combinación de lo aprendido en V1 y V2:
+               <strong>(1)</strong> eliminar precios &gt; $1M MXN (umbral de dominio, no estadístico),
+               <strong>(2)</strong> imputar precios nulos por categoría (ahora sin contaminación),
+               <strong>(3)</strong> log1p sobre precio y volumen,
+               <strong>(4)</strong> RobustScaler (mediana+IQR).
+               Bonus: <code>pct_ds</code> agregado — permitió separar Drop Shippers como segmento propio.</p>
             <span class="dc-pill green">Pipeline final — silhouette = 0.22 honesto</span>
           </div>
         </div>
@@ -689,7 +681,7 @@ section h2 span{color:var(--accent);}
 <section class="section" id="bigquery">
   <div class="container">
     <div class="section-label">08 — Arquitectura Cloud</div>
-    <h2>Escalabilidad en <span>BigQuery + dbt</span></h2>
+    <h2>Escalabilidad en <span>BigQuery + DataFlow</span></h2>
 
     <p style="color:var(--gray1);margin-bottom:28px;">
       El análisis local procesó 185,250 ítems en segundos. En producción: <strong>5,000M de
@@ -759,8 +751,8 @@ section h2 span{color:var(--accent);}
       <div class="decision-card">
         <div class="dc-header">💰 Costos y Trade-offs</div>
         <ul>
-          <li>Sin dbt: 2.5 TB/día = $625/día</li>
-          <li>Con dbt incremental: 6.85 GB/día = $1.70/día</li>
+          <li>Full refresh: 2.5 TB/día = $625/día</li>
+          <li>DataFlow incremental: 6.85 GB/día = $1.70/día</li>
           <li>Ahorro: $623/día = ~$227,000/año</li>
           <li>Costo único de setup: ~2-3 semanas de ingeniería</li>
         </ul>
@@ -769,49 +761,19 @@ section h2 span{color:var(--accent);}
     </div>
 
     <div class="highlight">
-      <strong>Modelo dbt incremental:</strong> <code>insert_overwrite</code> sobre la partición
-      del mes actual. La primera vez procesa toda la historia; las veces siguientes, solo el
-      snapshot nuevo del día (6.85 GB en lugar de 2.5 TB). El flag <code>is_incremental()</code>
-      activa automáticamente el filtro por <code>snapshot_date</code>.
+      <strong>DataFlow incremental (herramienta interna de MELI):</strong> job con variable
+      <code>&lt;JOB:LAST_START_OK&gt;</code> — filtra solo los datos desde la última ejecución
+      exitosa. La primera corrida procesa toda la historia; las siguientes, solo el snapshot nuevo
+      del día (6.85 GB en lugar de 2.5 TB). Lifecycle: <code>desa → send_to_approval → prod</code>.
     </div>
   </div>
 </section>
 <div class="container"><div class="divider"></div></div>
 
-<!-- 09 GENAI -->
-<section class="section" id="genai">
-  <div class="container">
-    <div class="section-label">09 — Integración GenAI</div>
-    <h2>IA como capa <span>interpretativa</span>, no como clasificador</h2>
-
-    <div class="hero-faq" style="margin-bottom:24px;">
-      <div class="faq-card">
-        <h3>❌ Lo que se descartó</h3>
-        <p>Clustering sobre embeddings de títulos de publicaciones.
-           Los embeddings agrupan por similitud semántica del texto — produce clusters
-           de <em>categorías de producto</em>, no de <em>perfiles de negocio</em>.</p>
-      </div>
-      <div class="faq-card">
-        <h3>✅ Lo que se implementó</h3>
-        <p>K-Means numérico para los clusters + Claude/LLM para interpretar los
-           centroides en lenguaje de negocio: etiquetas, estrategias y riesgo de churn
-           por segmento.</p>
-      </div>
-    </div>
-
-    <div class="highlight green">
-      <strong>Por qué este enfoque es superior:</strong> los clusters están anclados en datos
-      reales (no en intuición del LLM). Las estrategias son contextualizadas al perfil numérico,
-      no genéricas. Es reproducible: mismos centroides = mismo prompt = salida consistente.
-    </div>
-  </div>
-</section>
-<div class="container"><div class="divider"></div></div>
-
-<!-- 10 PRÓXIMOS PASOS -->
+<!-- 09 PRÓXIMOS PASOS -->
 <section class="section" id="proximos">
   <div class="container">
-    <div class="section-label">10 — Próximos Pasos</div>
+    <div class="section-label">09 — Próximos Pasos</div>
     <h2>Qué haría con <span>más tiempo</span></h2>
 
     <div class="step-cards">
@@ -836,18 +798,21 @@ section h2 span{color:var(--accent);}
       <div class="step-card">
         <div class="step-num">3</div>
         <div class="step-card-body">
-          <h4>PCA antes del clustering</h4>
+          <h4>PCA antes del clustering <span style="font-size:11px;font-weight:400;color:var(--gray2);margin-left:8px;">💡 Sugerido por la IA</span></h4>
           <p>Los canales logísticos (pct_fbm, pct_xd, pct_ds) están correlacionados
              negativamente entre sí (r = -0.53). PCA colapsaría esas 3 variables en
-             1-2 componentes, dando a K-Means un espacio de features más ortogonal.</p>
+             1-2 componentes, dando a K-Means un espacio de features más ortogonal.
+             Requeriría investigación adicional para validar el impacto en la interpretabilidad.</p>
         </div>
       </div>
       <div class="step-card">
         <div class="step-num">4</div>
         <div class="step-card-body">
-          <h4>Deploy del pipeline en Vertex AI + Airflow</h4>
-          <p>Mover el modelo K-Means a Vertex AI Pipelines para re-entrenamiento mensual
-             automático. Orquestar con Airflow DAG: ingest → dbt → train → score → notify AM.</p>
+          <h4>Deploy en DataFlow + Vertex AI <span style="font-size:11px;font-weight:400;color:var(--gray2);margin-left:8px;">💡 Sugerido por la IA</span></h4>
+          <p>Implementar el job de features en DataFlow con scheduler diario y el modelo
+             K-Means en Vertex AI Pipelines para re-entrenamiento mensual automático.
+             Requeriría acceso a la infraestructura productiva de MELI y conocimiento
+             adicional de las herramientas internas.</p>
         </div>
       </div>
     </div>

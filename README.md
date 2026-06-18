@@ -53,7 +53,8 @@ jupyter notebook   # 01_dataset_understanding.ipynb → 02_full_challenge_flow.i
 ```
 README.md                        Este archivo
 INFORME_TECNICO.md               Informe definitivo (auditoría → proceso → resultados/estrategia)
-GLOSARIO.md                      Conceptos de DS: StandardScaler, log1p, métricas, dbt, GenAI
+AUDITOR.md                       Metodología de auditoría con IA: criterios, decisiones descartadas y correcciones
+GLOSARIO.md                      Conceptos de DS: StandardScaler, log1p, métricas, DataFlow, GenAI
 report_mlm.html                  Reporte visual autocontenido
 
 config.py                        Constantes: features, umbrales de precio, orden de reputación
@@ -62,7 +63,6 @@ data_quality.py                  Auditoría, filtro de errores, imputación de p
 feature_engineering.py           Grano ítem → seller (18 features), log1p, has_reputation
 clustering.py                    Fuente única del modelo: RobustScaler + K-Means + métricas + resumen
 visualization.py                 Gráficos de EDA y heatmap de clusters
-bigquery_strategy.py             DDL y SQL ilustrativo para BigQuery (particionado/clustering)
 run_analysis.py                  Orquesta el pipeline y guarda artefactos en outputs/
 generate_report.py               Genera report_mlm.html desde outputs/
 
@@ -79,26 +79,13 @@ El orden importa: limpiar **antes** de imputar evita que los errores de carga co
 
 ## Proceso de desarrollo con IA generativa
 
-Este proyecto fue desarrollado con un flujo de trabajo asistido por múltiples modelos de IA, que forma parte del entregable como demostración práctica del uso de GenAI en Data Analytics.
+Este proyecto fue desarrollado con un flujo de trabajo asistido por múltiples modelos de IA:
 
-### 1. Generación inicial del código — Claude Codex
-El punto de partida fue descargar el dataset y la consigna. A partir de ahí, usando **Claude Codex** (coding agent), se desarrollaron todos los archivos `.py` del pipeline (`data_loading.py`, `data_quality.py`, `feature_engineering.py`, `clustering.py`, `visualization.py`, `bigquery_strategy.py`, `run_analysis.py`, `generate_report.py`) y los notebooks (`01_dataset_understanding.ipynb`, `02_full_challenge_flow.ipynb`).
+1. **Codex** → módulos base del pipeline (`data_loading.py`, `data_quality.py`, `feature_engineering.py`, `clustering.py`, `visualization.py`) + notebook inicial de exploración.
+2. **Gemini** (deep research) → criterios de auditoría basados en buenas prácticas de DS para e-commerce.
+3. **Claude Sonnet** → auditoría estructurada en 5 fases, corrección del pipeline, entregable final.
 
-### 2. Auditoría del código — Gemini Deep Research
-Una vez generado el código, se usó **Gemini** en modo *deep research* para investigar buenas prácticas en proyectos de Data Science aplicados a e-commerce: manejo de outliers en datos de pricing, estrategias de imputación, evaluación de clustering comportamental, y arquitecturas BigQuery para datos transaccionales. El resultado fue un conjunto de criterios de auditoría.
-
-### 3. Revisión y ajuste del pipeline — Claude Sonnet
-Con los criterios de auditoría y el contexto del proyecto documentado en `CLAUDE.md`, se corrió una sesión de revisión con **Claude Sonnet**. Se revisaron y ajustaron: el umbral de outlier de precio (`$1M MXN` por dominio, no por percentil), el orden del pipeline (limpiar *antes* de imputar), la codificación de reputación nula (`fillna(4)` + flag `has_reputation`), y la elección de K=5 por utilidad comercial vs. métricas puras.
-
-### 4. Skills reutilizables — `.claude/commands/`
-Como resultado del proceso, se generaron dos **Claude Commands** reutilizables en proyectos similares:
-
-| Skill | Descripción |
-|-------|-------------|
-| `/generar-analisis` | Replica el pipeline completo (carga → calidad → features → clustering) sobre cualquier CSV de marketplace MELI, contemplando nulos, outliers y errores de tipo. Entregable: artefactos en `outputs/` equivalentes a los de este proyecto. |
-| `/generate-html-report` | Genera un reporte HTML autocontenido (~270 KB) con los insights, métricas, estrategias por segmento y conclusiones del análisis. |
-
-Los archivos de los skills están en [`.claude/commands/`](.claude/commands/).
+El detalle completo del proceso de auditoría — qué propuso la IA, qué se descartó y por qué — está en **[`AUDITOR.md`](AUDITOR.md)**.
 
 ## Dependencias
 

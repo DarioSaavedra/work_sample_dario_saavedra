@@ -21,6 +21,9 @@ outputs/seller_features.csv
 outputs/seller_clusters.csv
 outputs_backup/
 
-# Herramientas locales de desarrollo
+# Herramientas locales de desarrollo (contexto interno de Claude Code)
 .claude/memory/
 .vscode/
+CLAUDE.md
+GLOSARIO.md
+Presentacion.md
