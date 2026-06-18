@@ -1,0 +1,21 @@
+generate_report.py
+  s_9497768c9f0cfe::t_c8b79d75694f39 1095-1106
+report_mlm.html
+  s_9497768c9f0cfe::t_a4fe0fe3cf781d 845-856
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "1f488265ea48342d2a2c848c7688b008760accfc",
+  "prompts": {},
+  "sessions": {
+    "s_9497768c9f0cfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5a36c90-d89b-4eb4-98ef-9555c2665904",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Dario Emanuel Saavedra Griott <darioemanuel.saavedragriott@mercadolibre.com>"
+    }
+  }
+}
