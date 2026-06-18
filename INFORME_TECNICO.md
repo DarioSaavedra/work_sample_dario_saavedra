@@ -204,6 +204,14 @@ En DataFlow, el procesamiento incremental se logra con la variable especial **`<
 -- Variable configurada en el job: DATE_FROM = <JOB:LAST_START_OK>
 -- Primera corrida: DATE_FROM = fecha de inicio del proyecto → procesa toda la historia
 -- Corridas siguientes: DATE_FROM = timestamp del último run exitoso → solo datos nuevos
+--
+-- Estrategia idempotente: DELETE + INSERT.
+-- INSERT INTO simple no es idempotente — si el job falla y se reintenta,
+-- duplica los registros del día. DELETE previo garantiza que una re-ejecución
+-- del mismo rango de fechas siempre produce el mismo resultado.
+
+DELETE FROM TBL.seller_daily_features
+WHERE tim_day >= '${DATE_FROM}';
 
 INSERT INTO TBL.seller_daily_features
 SELECT
@@ -217,9 +225,12 @@ SELECT
   AVG(CASE WHEN logistic_type = 'XD'   THEN 1 ELSE 0 END)   AS pct_xd,
   AVG(CASE WHEN logistic_type = 'DS'   THEN 1 ELSE 0 END)   AS pct_ds,
   AVG(CASE WHEN logistic_type = 'FLEX' THEN 1 ELSE 0 END)   AS pct_flex,
-  AVG(
-    CASE WHEN regular_price IS NOT NULL AND regular_price > price
-    THEN (regular_price - price) / regular_price END
+  COALESCE(
+    AVG(
+      CASE WHEN regular_price IS NOT NULL AND regular_price > price
+      THEN (regular_price - price) / regular_price END
+    ),
+    0
   )                                                           AS avg_discount_pct
 FROM TBL.items_snapshot_raw
 WHERE tim_day >= '${DATE_FROM}'    -- <JOB:LAST_START_OK> se resuelve en runtime

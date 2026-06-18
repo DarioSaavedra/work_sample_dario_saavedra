@@ -18,7 +18,7 @@ Segmentación no supervisada de vendedores del marketplace mexicano (MLM) a part
 | C2 | FBM Discount Players | 5.426 | 11,7% |
 | C3 | Power Sellers Multi-Categoría | 846 | 1,8% |
 
-El detalle metodológico, las tres iteraciones del clustering, las estrategias comerciales y la arquitectura cloud están en **[`INFORME_TECNICO.md`](INFORME_TECNICO.md)**. Los conceptos de Data Science (StandardScaler, RobustScaler, log1p, métricas de clustering, dbt, GenAI) están explicados en **[`GLOSARIO.md`](GLOSARIO.md)**. El reporte visual autocontenido está en **`report_mlm.html`** (abrir en el navegador).
+El detalle metodológico, las tres iteraciones del clustering, las estrategias comerciales y la arquitectura cloud están en **[`INFORME_TECNICO.md`](INFORME_TECNICO.md)**. El reporte visual autocontenido está en **`report_mlm.html`** (abrir en el navegador).
 
 ## Cómo ejecutar
 
@@ -54,7 +54,6 @@ jupyter notebook   # 01_dataset_understanding.ipynb → 02_full_challenge_flow.i
 README.md                        Este archivo
 INFORME_TECNICO.md               Informe definitivo (auditoría → proceso → resultados/estrategia)
 AUDITOR.md                       Metodología de auditoría con IA: criterios, decisiones descartadas y correcciones
-GLOSARIO.md                      Conceptos de DS: StandardScaler, log1p, métricas, DataFlow, GenAI
 report_mlm.html                  Reporte visual autocontenido
 
 config.py                        Constantes: features, umbrales de precio, orden de reputación
