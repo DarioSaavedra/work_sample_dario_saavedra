@@ -1045,6 +1045,18 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
       <div class="step-card">
         <div class="step-num">1</div>
         <div class="step-card-body">
+          <h4>Testing automatizado con pytest</h4>
+          <p>El pipeline no tiene cobertura de tests. Los casos críticos a cubrir:
+             <code>filter_critical_errors()</code> descarta exactamente los registros correctos;
+             <code>impute_price_by_category()</code> no propaga outliers cuando se limpia primero;
+             <code>add_log_features()</code> produce 0 para entradas nulas o negativas;
+             <code>evaluate_kmeans_range()</code> devuelve una fila por K con métricas en rango válido.
+             Sin tests, un cambio en el pipeline puede romper resultados silenciosamente.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-card-body">
           <h4>Enriquecer con datos transaccionales reales</h4>
           <p>El challenge usa un snapshot de publicaciones, no de órdenes. Con acceso a
              GMV, tasa de conversión, tasa de cancelación y reviews, las features serían
@@ -1052,7 +1064,7 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
         </div>
       </div>
       <div class="step-card">
-        <div class="step-num">2</div>
+        <div class="step-num">3</div>
         <div class="step-card-body">
           <h4>Análisis temporal — ventanas rolling de 30/90 días</h4>
           <p>Un snapshot único no captura seasonality ni tendencias. Un seller puede estar
@@ -1061,7 +1073,7 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
         </div>
       </div>
       <div class="step-card">
-        <div class="step-num">3</div>
+        <div class="step-num">4</div>
         <div class="step-card-body">
           <h4>PCA antes del clustering <span style="font-size:11px;font-weight:400;color:var(--gray2);margin-left:8px;">💡 Sugerido por la IA</span></h4>
           <p>Los canales logísticos (pct_fbm, pct_xd, pct_ds) están correlacionados
@@ -1071,7 +1083,7 @@ def build_html(perfil, per_cluster_sil, sil, dbi, df, sf, img_sizes, img_heatmap
         </div>
       </div>
       <div class="step-card">
-        <div class="step-num">4</div>
+        <div class="step-num">5</div>
         <div class="step-card-body">
           <h4>Deploy en DataFlow + Vertex AI <span style="font-size:11px;font-weight:400;color:var(--gray2);margin-left:8px;">💡 Sugerido por la IA</span></h4>
           <p>Implementar el job de features en DataFlow con scheduler diario y el modelo

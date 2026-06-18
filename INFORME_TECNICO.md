@@ -422,7 +422,13 @@ BigQuery (seller_cluster_assignments, mensual)
 | Sin tasa de cancelación | No medimos el riesgo real de C3 (DS-heavy) | Join con órdenes canceladas |
 | Sin dimensión temporal | Un seller puede migrar de cluster | Trackear `cluster_assignment` histórico por seller |
 
-**Próximos pasos:** (1) mover el scoring a Vertex AI con re-entrenamiento mensual; (2) enriquecer con datos transaccionales para validar la priorización por GMV; (3) activar la capa GenAI con la API real para generar fichas de segmento automáticamente; (4) cerrar el loop con el CRM y medir el uplift de cada estrategia.
+**Próximos pasos:**
+
+1. **Testing automatizado con pytest** — el pipeline no tiene cobertura de tests. Para producción, los casos críticos a cubrir son: (a) `filter_critical_errors()` descarta exactamente los registros esperados; (b) `impute_price_by_category()` no propaga outliers cuando se aplica después de limpiarlos; (c) `add_log_features()` produce 0 para entradas nulas o negativas; (d) `evaluate_kmeans_range()` devuelve una fila por K y las métricas están en rango válido. Sin tests, un cambio en `data_quality.py` o `feature_engineering.py` puede romper el pipeline silenciosamente.
+2. **Scoring en Vertex AI** con re-entrenamiento mensual sobre ventanas rolling de 90 días.
+3. **Enriquecer con datos transaccionales** (GMV, cancelaciones, tasa de conversión) para validar la priorización por cluster con números reales.
+4. **Activar la capa GenAI real** — instalar `anthropic`, configurar `ANTHROPIC_API_KEY` y llamar al LLM con el prompt de `build_cluster_prompt()` para generar fichas de segmento automáticamente.
+5. **Cerrar el loop con el CRM**: conectar `seller_cluster_assignments` a la herramienta de campañas y medir el uplift de cada estrategia.
 
 ---
 
